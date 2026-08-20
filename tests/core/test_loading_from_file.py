@@ -1,6 +1,6 @@
-import pytest
 import json
 
+import pytest
 from eth_utils import (
     decode_hex,
 )

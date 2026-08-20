@@ -1,6 +1,7 @@
-import pytest
 import json
 import os
+
+import pytest
 
 import eth_keyfile
 
