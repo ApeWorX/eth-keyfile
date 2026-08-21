@@ -49,11 +49,11 @@ from eth_utils import (
     to_dict,
     to_int,
 )
-from py_ecc.bls12_381 import (
-    curve_order,
-)
 from py_ecc.bls import (
     G2ProofOfPossession as bls,
+)
+from py_ecc.bls12_381 import (
+    curve_order,
 )
 from py_ecc.secp256k1 import (
     N,

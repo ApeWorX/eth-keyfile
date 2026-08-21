@@ -1,16 +1,16 @@
 # eth-keyfile
 
-[![Join the conversation on Discord](https://img.shields.io/discord/809793915578089484?color=blue&label=chat&logo=discord&logoColor=white)](https://discord.gg/GHryRvPB84) [![Build Status](https://circleci.com/gh/ethereum/eth-keyfile.svg?style=shield)](https://circleci.com/gh/ethereum/eth-keyfile)
+[![Build Status](https://github.com/ApeWorX/eth-keyfile/actions/workflows/test.yaml/badge.svg)](https://github.com/ApeWorX/eth-keyfile/actions/workflows/test.yaml)
 [![PyPI version](https://badge.fury.io/py/eth-keyfile.svg)](https://badge.fury.io/py/eth-keyfile)
 [![Python versions](https://img.shields.io/pypi/pyversions/eth-keyfile.svg)](https://pypi.python.org/pypi/eth-keyfile)
 
 A library for handling the encrypted keyfiles used to store ethereum private keys
 
-> This library and repository was previously located at https://github.com/pipermerriam/ethereum-keyfile.  It was transferred to the Ethereum foundation github in November 2017 and renamed to `eth-keyfile`.  The PyPi package was also renamed from `ethereum-keyfile` to `eth-keyfile`.
+> This library and repository was previously located at https://github.com/pipermerriam/ethereum-keyfile. It was transferred to the Ethereum foundation github in November 2017 and renamed to `eth-keyfile`. The PyPi package was also renamed from `ethereum-keyfile` to `eth-keyfile`.
 
 Read more in the documentation below.
 
-View the [change log](https://github.com/ethereum/eth-keyfile/blob/main/CHANGELOG.rst).
+View the [change log](https://github.com/ApeWorX/eth-keyfile/blob/main/CHANGELOG.rst).
 
 ## Installation
 
@@ -56,8 +56,8 @@ Takes the following parameters:
 - `private_key`: A bytestring of length 32. [See note below.](#a-note-on-private-keys)
 - `password`: A bytestring which will be the password that can be used to decrypt the resulting keyfile.
 - `version`: An `int` to select the keyfile standard to use. Supported are `3` and `4`. Defaults to `3`.
-- `kdf`: A `str` to select the key derivation function.  Allowed values are `pbkdf2` and `scrypt`.  By default, `pbkdf2` will be used.
-- `iterations`: An `int` to set the work factor which will be used for the given key derivation function.  By default `1000000` will be used for `pbkdf2` and `262144` for `scrypt`.
+- `kdf`: A `str` to select the key derivation function. Allowed values are `pbkdf2` and `scrypt`. By default, `pbkdf2` will be used.
+- `iterations`: An `int` to set the work factor which will be used for the given key derivation function. By default `1000000` will be used for `pbkdf2` and `262144` for `scrypt`.
 - `salt_size`: An `int` to define the size of the randomly-generated salt in bytes. Defaults to `16` for v3 and `32` for v4.
 - `description`: (v4 only) An optional `str` for a user-defined message, generally to be able to tell one keyfile from another. Defaults to an empty string.
 - `path`: (v4 only) An optional `str` to indicate where in the key-tree a key originates from. Defaults to an empty string. See [EIP-2334](https://eips.ethereum.org/EIPS/eip-2334) for more detail.
@@ -166,7 +166,7 @@ b'\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x
 ### `eth_keyfile.extract_key_from_keyfile(path_or_file_obj, password) --> private_key`
 
 Takes a filesystem path represented by a string or a file object and the
-password for the keyfile.  Returns the private key as a bytestring.
+password for the keyfile. Returns the private key as a bytestring.
 
 ```python
 >>> extract_key_from_keyfile('path/to-my-keystore/keyfile.json', b'foo')
@@ -175,51 +175,39 @@ b'\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x
 
 ## Developer Setup
 
-If you would like to hack on eth-keyfile, please check out the [Snake Charmers
-Tactical Manual](https://github.com/ethereum/snake-charmers-tactical-manual)
-for information on how we do:
-
-- Testing
-- Pull Requests
-- Documentation
-
-We use [pre-commit](https://pre-commit.com/) to maintain consistent code style. Once
+We use [prek](https://prek.j178.dev) to maintain consistent code style. Once
 installed, it will run automatically with every commit. You can also run it manually
-with `make lint`. If you need to make a commit that skips the `pre-commit` checks, you
-can do so with `git commit --no-verify`.
+with `uv run prek run --all-files --show-diff-on-failure`. If you
+need to make a commit that skips the `prek` checks, you can do so with
+`git commit --no-verify`.
 
 ### Development Environment Setup
 
-You can set up your dev environment with:
+You can set up your dev environment with the `dev` dependency group, which is
+installed by default when you run `uv sync`.
 
 ```sh
-git clone git@github.com:ethereum/eth-keyfile.git
+git clone --recurse-submodules git@github.com:ApeWorX/eth-keyfile.git
 cd eth-keyfile
-virtualenv -p python3 venv
-. venv/bin/activate
-python -m pip install -e ".[dev]"
-pre-commit install
+uv sync
+uv run prek install
+```
+
+Common development commands:
+
+```sh
+uv run --group test pytest tests/core tests/test_exceptions.py
+uv run --group lint ruff check .
+uv run --group lint ruff format --check .
+uv run --group lint --group test mypy .
+uv build
 ```
 
 ### Release setup
 
-To release a new version:
-
-```sh
-make release bump=$$VERSION_PART_TO_BUMP$$
-```
-
-#### How to bumpversion
+Versions are derived from Git tags by `setuptools-scm`. To release a new version,
+create a GitHub Release for the desired tag. The release workflow builds the package
+and publishes to PyPI through trusted publishing.
 
 The version format for this repo is `{major}.{minor}.{patch}` for stable, and
 `{major}.{minor}.{patch}-{stage}.{devnum}` for unstable (`stage` can be alpha or beta).
-
-To issue the next version in line, specify which part to bump,
-like `make release bump=minor` or `make release bump=devnum`. This is typically done from the
-main branch, except when releasing a beta (in which case the beta is released from main,
-and the previous stable branch is released from said branch).
-
-If you are in a beta version, `make release bump=stage` will switch to a stable.
-
-To issue an unstable version when the current version is stable, specify the
-new version explicitly, like `make release bump="--new-version 4.0.0-alpha.1 devnum"`

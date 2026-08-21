@@ -1,5 +1,4 @@
 import pytest
-
 from eth_utils import (
     decode_hex,
     to_bytes,
