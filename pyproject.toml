@@ -29,7 +29,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-    "eth-keys>=0.4.0",
+    "eth-keys>=0.8.0",
     "eth-utils>=2",
     "py_ecc>=5.2.0",
     "pycryptodome>=3.6.6,<4",
