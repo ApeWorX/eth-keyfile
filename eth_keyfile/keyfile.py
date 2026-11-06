@@ -420,9 +420,20 @@ def _decode_keyfile_json_v4(keyfile_json: dict[str, Any], password: bytes) -> by
 #
 # Key derivation
 #
+def _validate_dklen(dklen: Any) -> int:
+    # The first 16 bytes of the derived key are the AES key and bytes 16..31 are
+    # mixed into the MAC/checksum. With a shorter key, derived_key[16:32] is
+    # empty or truncated, so a wrong password can pass the MAC check.
+    if not isinstance(dklen, int) or isinstance(dklen, bool) or dklen < DKLEN:
+        raise EthKeyfileValueError(
+            f"Invalid kdf dklen: {dklen!r}. Must be an integer of at least {DKLEN}."
+        )
+    return dklen
+
+
 def _derive_pbkdf_key(kdf_params: dict[str, Any], password: bytes) -> bytes:
     salt = decode_hex(kdf_params["salt"])
-    dklen = kdf_params["dklen"]
+    dklen = _validate_dklen(kdf_params["dklen"])
     should_be_hmac, _, hash_name = kdf_params["prf"].partition("-")
     assert should_be_hmac == "hmac"
     iterations = kdf_params["c"]
@@ -437,7 +448,7 @@ def _derive_scrypt_key(kdf_params: dict[str, Any], password: bytes) -> bytes:
     p = kdf_params["p"]
     r = kdf_params["r"]
     n = kdf_params["n"]
-    buflen = kdf_params["dklen"]
+    buflen = _validate_dklen(kdf_params["dklen"])
 
     derived_scrypt_key = _scrypt_hash(
         password,
