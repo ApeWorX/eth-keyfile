@@ -270,6 +270,26 @@ def _decode_keyfile_json_v3(keyfile_json: dict[str, Any], password: bytes) -> by
 
 
 #
+# Version 4 password processing
+#
+
+
+def _clean_v4_password(password: bytes) -> bytes:
+    """
+    Process a v4 (EIP-2335) password before it goes into the KDF.
+
+    EIP-2335 requires the password to be NFKD-normalized and stripped of the
+    C0, C1 and Delete control codes, both when a keystore is created and when
+    it is decrypted.
+    """
+    password_str = normalize("NFKD", password.decode())
+    password_str = "".join(
+        c for c in password_str if ord(c) not in UNICODE_CONTROL_CHARS
+    )
+    return password_str.encode("UTF-8")
+
+
+#
 # Version 4 creator
 #
 
@@ -303,12 +323,7 @@ def _create_v4_keyfile_json(
     salt: bytes = Random.get_random_bytes(salt_size)
     uuid: str = str(uuid4())
 
-    # clean password
-    password_str = normalize("NFKD", password.decode())
-    password_str = "".join(
-        c for c in password_str if ord(c) not in UNICODE_CONTROL_CHARS
-    )
-    clean_password = password_str.encode("UTF-8")
+    clean_password = _clean_v4_password(password)
 
     if kdf == "pbkdf2":
         derived_key = _pbkdf2_hash(
@@ -388,12 +403,15 @@ def _decode_keyfile_json_v4(keyfile_json: dict[str, Any], password: bytes) -> by
     crypto = keyfile_json["crypto"]
     kdf = crypto["kdf"]["function"]
 
+    # Apply the same EIP-2335 password processing as the v4 creator.
+    clean_password = _clean_v4_password(password)
+
     # Derive the encryption key from the password using the key derivation
     # function.
     if kdf == "pbkdf2":
-        derived_key = _derive_pbkdf_key(crypto["kdf"]["params"], password)
+        derived_key = _derive_pbkdf_key(crypto["kdf"]["params"], clean_password)
     elif kdf == "scrypt":
-        derived_key = _derive_scrypt_key(crypto["kdf"]["params"], password)
+        derived_key = _derive_scrypt_key(crypto["kdf"]["params"], clean_password)
     else:
         raise EthKeyfileTypeError(f"Unsupported key derivation function: {kdf}")
 
